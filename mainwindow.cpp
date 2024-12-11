@@ -5,6 +5,7 @@
 #include <QImage>
 #include <QVBoxLayout>
 #include <QMenuBar>
+#include <QMessageBox>
 #include <QFileDialog>
 #include <QScreen>
 #include <QPixmap>
@@ -16,9 +17,9 @@
 
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
-    imageView(new QLabel),
     sharpenStrength(new QSlider(Qt::Horizontal)),
     contrastAdaption(new QSlider(Qt::Horizontal)),
+    imageView(new QLabel),
     sharpenStrengthLabel(new QLabel("Sharpen Strength")),
     contrastAdaptionLabel(new QLabel("Contrast Adaption")),
     casObj(CAS_initialize(5,5)),
@@ -36,11 +37,13 @@ MainWindow::MainWindow(QWidget *parent) :
     setupMainWidget();
 }
 
+//destroy DLL's memory
 MainWindow::~MainWindow()
 {
     CAS_destroy(casObj);
 }
 
+//setup CAS parameter sliders
 void MainWindow::setupSlider(QSlider *slider, QLabel *label, const int value)
 {
     //Setup slider properties (QSlider and correspinding QLabel)
@@ -51,6 +54,7 @@ void MainWindow::setupSlider(QSlider *slider, QLabel *label, const int value)
     connect(slider, &QSlider::valueChanged, this, &MainWindow::sliderValueChanged);
 }
 
+//setup "File" menu
 void MainWindow::setupMenu()
 {
     // File Menu
@@ -59,8 +63,10 @@ void MainWindow::setupMenu()
     saveImageAction = fileMenu->addAction("Save Image");
     saveImageAction->setEnabled(false);
     connect(openImageAction, &QAction::triggered, this, &MainWindow::openImage);
+    connect(saveImageAction, &QAction::triggered, this, &MainWindow::saveImage);
 }
 
+//setup Main image view
 void MainWindow::setupImageView()
 {
     imageView->setAlignment(Qt::AlignCenter);
@@ -90,9 +96,10 @@ void MainWindow::addSliderLayout(QVBoxLayout *mainLayout, QSlider *slider, QLabe
     mainLayout->addLayout(sliderLayout);
 }
 
+//Open an image and display it to the user. Reinitialize CAS with the new dimensions and
 void MainWindow::openImage()
 {
-    QString fileName = QFileDialog::getOpenFileName(this, "Open Image", "", "Images (*.png *.jpg)");
+    const QString fileName = QFileDialog::getOpenFileName(this, "Open Image", "", "Images (*.png *.jpg)");
     if (fileName.isEmpty())
         return;
     QImageReader reader(fileName);
@@ -123,7 +130,20 @@ void MainWindow::openImage()
     }
 }
 
+//Attempt to save the sharpened image
+void MainWindow::saveImage()
+{
+    const QString fileName = QFileDialog::getSaveFileName(this, "Save Image", QString(), "Images (*.png *.jpg *.bmp)");
+    if (fileName.isEmpty())
+        return;
 
+    if (!image.save(fileName))
+        QMessageBox::warning(this, "Save Image", "Failed to save the image.");
+    else
+        QMessageBox::information(this, "Save Image", "Image saved successfully.");
+}
+
+//event handler when a Slider is changed, triggers the CAS sharpening to occur and the display to show the new image
 void MainWindow::sliderValueChanged()
 {
     //don't calculate it parameters are (very close to) 0
@@ -131,8 +151,10 @@ void MainWindow::sliderValueChanged()
         return;
     //apply CAS sharpening
     const uchar* casData = CAS_sharpenImage(casObj, image.constBits(), 1, CLAMP(sharpenStrength->value()), CLAMP(contrastAdaption->value()));
+    //keep image data
+    image = QImage(casData, image.width(), image.height(), QImage::Format_RGB888);
     //show the new image
-    QPixmap pixmap = QPixmap::fromImage(QImage(casData, image.width(), image.height(), QImage::Format_RGB888));
+    QPixmap pixmap = QPixmap::fromImage(image);
     WidgetUtils::scalePixmap(pixmap, targetImageSize);
     imageView->setPixmap(pixmap);
 }

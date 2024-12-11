@@ -17,6 +17,7 @@ public:
 
 private slots:
     void openImage();
+    void saveImage();
     void sliderValueChanged();
 
 private:
@@ -29,9 +30,8 @@ private:
     void addSliderLayout(QVBoxLayout *mainLayout, QSlider *slider, QLabel *label);
 
     QImage image;
-    QLabel *imageView;
     QSlider *sharpenStrength, *contrastAdaption;
-    QLabel *sharpenStrengthLabel, *contrastAdaptionLabel;
+    QLabel *imageView, *sharpenStrengthLabel, *contrastAdaptionLabel;
     void* casObj;
     QAction *openImageAction, *saveImageAction;
     const QSize targetImageSize;
