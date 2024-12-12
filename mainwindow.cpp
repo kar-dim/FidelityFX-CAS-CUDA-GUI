@@ -96,6 +96,14 @@ void MainWindow::addSliderLayout(QVBoxLayout *mainLayout, QSlider *slider, QLabe
     mainLayout->addLayout(sliderLayout);
 }
 
+//updates the Image label to show the passed-in QImage
+void MainWindow::updateImageView(const QImage& image)
+{
+    QPixmap pixmap = QPixmap::fromImage(image);
+    WidgetUtils::scalePixmap(pixmap, targetImageSize);
+    imageView->setPixmap(pixmap);
+}
+
 //Open an image and display it to the user. Reinitialize CAS with the new dimensions and
 void MainWindow::openImage()
 {
@@ -104,20 +112,17 @@ void MainWindow::openImage()
         return;
     QImageReader reader(fileName);
     reader.setAutoTransform(true);
-    image = reader.read();
+    originalImage = reader.read();
 
-    if (!image.isNull())
+    if (!originalImage.isNull())
     {
-        if (image.format() != QImage::Format_RGBA8888)
-            image = image.convertToFormat(QImage::Format_RGBA8888);
-
+        //convert to RGBA interleaved format
+        originalImage = originalImage.convertToFormat(QImage::Format_RGBA8888);
         //reinitialize CAS memory
-        CAS_reinitialize(casObj, image.height(), image.width());
+        CAS_reinitialize(casObj, originalImage.height(), originalImage.width());
 
         // Only scale down if the image is larger than the target size
-        QPixmap pixmap = QPixmap::fromImage(image);
-        WidgetUtils::scalePixmap(pixmap, targetImageSize);
-        imageView->setPixmap(pixmap);
+        updateImageView(originalImage);
         WidgetUtils::setVisibility(true, imageView, sharpenStrength, contrastAdaption, sharpenStrengthLabel, contrastAdaptionLabel);
         saveImageAction->setEnabled(true);
 
@@ -137,7 +142,7 @@ void MainWindow::saveImage()
     if (fileName.isEmpty())
         return;
 
-    if (!image.save(fileName))
+    if (!sharpenedImage.save(fileName))
         QMessageBox::warning(this, "Save Image", "Failed to save the image.");
     else
         QMessageBox::information(this, "Save Image", "Image saved successfully.");
@@ -149,12 +154,10 @@ void MainWindow::sliderValueChanged()
     //don't calculate it parameters are (very close to) 0
     if (sharpenStrength->value() <= 0.001 || contrastAdaption->value() <= 0.001)
         return;
-    //apply CAS sharpening
-    const uchar* casData = CAS_sharpenImage(casObj, image.constBits(), 1, CLAMP(sharpenStrength->value()), CLAMP(contrastAdaption->value()));
-    //keep image data
-    image = QImage(casData, image.width(), image.height(), QImage::Format_RGB888);
-    //show the new image
-    QPixmap pixmap = QPixmap::fromImage(image);
-    WidgetUtils::scalePixmap(pixmap, targetImageSize);
-    imageView->setPixmap(pixmap);
+
+    //apply CAS CUDA from DLL and update UI
+    const uchar* casData = CAS_sharpenImage(casObj, originalImage.constBits(), 1, CLAMP(sharpenStrength->value()), CLAMP(contrastAdaption->value()));
+    sharpenedImage = QImage(casData, originalImage.width(), originalImage.height(), originalImage.width() * 3, QImage::Format_RGB888);
+    updateImageView(sharpenedImage);
+
 }

@@ -28,8 +28,9 @@ private:
     void setupImageView();
     void setupMainWidget();
     void addSliderLayout(QVBoxLayout *mainLayout, QSlider *slider, QLabel *label);
+    void updateImageView(const QImage& image);
 
-    QImage image;
+    QImage originalImage, sharpenedImage;
     QSlider *sharpenStrength, *contrastAdaption;
     QLabel *imageView, *sharpenStrengthLabel, *contrastAdaptionLabel;
     void* casObj;
