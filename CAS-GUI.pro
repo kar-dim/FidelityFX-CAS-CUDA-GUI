@@ -20,6 +20,18 @@ HEADERS += \
 LIBS += -L$$PWD/libs -lFidelityFX-CAS-CUDA
 INCLUDEPATH += $$PWD/libs/include
 
+DISTFILES += \
+    assets/theme_images/checkbox.png \
+    assets/theme_images/down_arrow.png \
+    assets/theme_images/handle.png \
+    assets/fonts/TitilliumWeb-Regular.ttf \
+    stylesheets/main.qss
+
+RESOURCES += \
+    Resources.qrc
+
+RC_ICONS = assets/gpuopen.ico
+
 # Default rules for deployment.
 qnx: target.path = /tmp/$${TARGET}/bin
 else: unix:!android: target.path = /opt/$${TARGET}/bin
