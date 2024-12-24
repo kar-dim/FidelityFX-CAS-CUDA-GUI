@@ -159,7 +159,7 @@ void MainWindow::sliderValueChanged()
     //apply CAS CUDA from DLL and update UI
     const int sharpenedImageChannels = originalImageAlpha ? 4 : 3;
     const auto sharpenedImageFormat = originalImageAlpha ? QImage::Format_RGBA8888 : QImage::Format_RGB888;
-    const uchar* casData = CAS_sharpenImage(casObj, originalImage.constBits(), CLAMP(sharpenStrength->value()), CLAMP(contrastAdaption->value()));
+    const uchar* casData = CAS_sharpenImage(casObj, 1, originalImage.constBits(), CLAMP(sharpenStrength->value()), CLAMP(contrastAdaption->value()));
     sharpenedImage = QImage(casData, originalImage.width(), originalImage.height(), originalImage.width() * sharpenedImageChannels, sharpenedImageFormat);
     updateImageView(sharpenedImage);
 
