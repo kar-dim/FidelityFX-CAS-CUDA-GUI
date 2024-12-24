@@ -22,7 +22,7 @@ MainWindow::MainWindow(QWidget *parent) :
     imageView(new QLabel),
     sharpenStrengthLabel(new QLabel("Sharpen Strength")),
     contrastAdaptionLabel(new QLabel("Contrast Adaption")),
-    casObj(CAS_initialize(5,5)),
+    casObj(CAS_initialize(0,5,5)),
     // 80% of the screen size
     targetImageSize(QGuiApplication::primaryScreen()->availableGeometry().size() * 0.8)
 {
@@ -104,7 +104,7 @@ void MainWindow::updateImageView(const QImage& image)
     imageView->setPixmap(pixmap);
 }
 
-//Open an image and display it to the user. Reinitialize CAS with the new dimensions and
+//Open an image and display it to the user. Reinitialize CAS with the new dimensions
 void MainWindow::openImage()
 {
     const QString fileName = QFileDialog::getOpenFileName(this, "Open Image", "", "Images (*.png *.jpg)");
@@ -117,9 +117,10 @@ void MainWindow::openImage()
     if (!originalImage.isNull())
     {
         //convert to RGBA interleaved format
+        originalImageAlpha = originalImage.hasAlphaChannel();
         originalImage = originalImage.convertToFormat(QImage::Format_RGBA8888);
         //reinitialize CAS memory
-        CAS_reinitialize(casObj, originalImage.height(), originalImage.width());
+        CAS_reinitialize(casObj, originalImageAlpha, originalImage.height(), originalImage.width());
 
         // Only scale down if the image is larger than the target size
         updateImageView(originalImage);
@@ -156,8 +157,10 @@ void MainWindow::sliderValueChanged()
         return;
 
     //apply CAS CUDA from DLL and update UI
-    const uchar* casData = CAS_sharpenImage(casObj, originalImage.constBits(), 1, CLAMP(sharpenStrength->value()), CLAMP(contrastAdaption->value()));
-    sharpenedImage = QImage(casData, originalImage.width(), originalImage.height(), originalImage.width() * 3, QImage::Format_RGB888);
+    const int sharpenedImageChannels = originalImageAlpha ? 4 : 3;
+    const auto sharpenedImageFormat = originalImageAlpha ? QImage::Format_RGBA8888 : QImage::Format_RGB888;
+    const uchar* casData = CAS_sharpenImage(casObj, originalImage.constBits(), CLAMP(sharpenStrength->value()), CLAMP(contrastAdaption->value()));
+    sharpenedImage = QImage(casData, originalImage.width(), originalImage.height(), originalImage.width() * sharpenedImageChannels, sharpenedImageFormat);
     updateImageView(sharpenedImage);
 
 }

@@ -36,6 +36,7 @@ private:
     void* casObj;
     QAction *openImageAction, *saveImageAction;
     const QSize targetImageSize;
+    bool originalImageAlpha;
 };
 
 #endif // MAINWINDOW_H
