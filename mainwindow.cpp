@@ -107,7 +107,7 @@ void MainWindow::updateImageView(const QImage& image)
 //Open an image and display it to the user. Reinitialize CAS with the new dimensions
 void MainWindow::openImage()
 {
-    const QString fileName = QFileDialog::getOpenFileName(this, "Open Image", "", "Images (*.png *.jpg)");
+    const QString fileName = QFileDialog::getOpenFileName(this, "Open Image", "", imageDialogFilterText);
     if (fileName.isEmpty())
         return;
     QImageReader reader(fileName);
@@ -139,7 +139,7 @@ void MainWindow::openImage()
 //Attempt to save the sharpened image
 void MainWindow::saveImage()
 {
-    const QString fileName = QFileDialog::getSaveFileName(this, "Save Image", QString(), "Images (*.png *.jpg *.bmp)");
+    const QString fileName = QFileDialog::getSaveFileName(this, "Save Image", QString(), imageDialogFilterText);
     if (fileName.isEmpty())
         return;
 

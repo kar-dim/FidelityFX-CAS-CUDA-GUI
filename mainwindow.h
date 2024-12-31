@@ -21,6 +21,7 @@ private slots:
     void sliderValueChanged();
 
 private:
+    const QString imageDialogFilterText { "Images (*.png *.jpg *.bmp *.webp *.tiff)" };
     void setupMenu();
     void setupUI();
     void setupSlider(QSlider *slider, QLabel *label, const int value);
